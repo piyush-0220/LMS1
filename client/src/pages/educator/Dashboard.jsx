@@ -2,18 +2,33 @@ import React, { useContext, useEffect, useState } from 'react'
 import { AppContext } from '../../context/AppContext'
 import { assets, dummyDashboardData } from '../../assets/assets'
 import Loading from '../../components/student/Loading'
+import axios from 'axios'
 
 const Dashboard = () => {
-  const {currency} = useContext(AppContext)
+  const {currency, backendUrl, isEducator, getToken} = useContext(AppContext)
   const [dashboardData, setDashboardData] = useState(null)
 
   const fetchDashboardData = async () => {
-    setDashboardData(dummyDashboardData)
+    try {
+      const token = await getToken()
+      const { data } = await axios.get(backendUrl + '/api/educator/dashboard', {headers: {Authorization: `Bearer ${token}`}})
+
+      if(data.success) {
+        setDashboardData(data.dashboardData)
+      }
+      else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }
   }
 
   useEffect(() => {
-    fetchDashboardData()
-  }, [])
+    if(isEducator) {
+      fetchDashboardData()
+    }
+  }, [isEducator])
 
 
   return dashboardData ? (
@@ -44,7 +59,7 @@ const Dashboard = () => {
             </div>
 
             <div>
-              <h2 className='pb-4 text-lg font-medium'>Latest Enrolments</h2>
+              <h2 className='pb-4 text-lg font-medium'>Latest Enrollments</h2>
               <div className='flex flex-col items-center max-w-4xl w-full overflow-hidden rounded-md bg-white border border-gray-500/20'>
                   <table className='table-fixed md:table-auto w-full overflow-hidden'>
                     <thead className='text-gray-900 border-b border-gray-500/20 text-sm text-left'>
